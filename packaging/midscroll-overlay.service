@@ -1,0 +1,33 @@
+[Unit]
+Description=Windows Scroll Linux v1 desktop helper
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/local/bin/midscroll-overlay
+Restart=on-failure
+RestartSec=1s
+TimeoutStopSec=4s
+NoNewPrivileges=yes
+AmbientCapabilities=
+# The user manager cannot clear the bounding set without CAP_SETPCAP. Its
+# permitted/effective sets are already empty; NoNewPrivileges prevents gains.
+# Do not add mount/UTS namespace restrictions here. An unprivileged user unit
+# implements those through an implicit user namespace, mapping host root to
+# overflow UID 65534 and breaking exact root ownership/SO_PEERCRED validation.
+# Keep host UID identity and the restrictions below; the root daemon retains
+# its separate filesystem/namespace protections.
+RestrictNamespaces=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+SystemCallArchitectures=native
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+TasksMax=64
+MemoryMax=384M
+UMask=0077
+
+[Install]
+WantedBy=graphical-session.target

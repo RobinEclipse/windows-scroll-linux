@@ -1,0 +1,11 @@
+daemon/target/
+__pycache__/
+*.pyc
+dist/
+build/
+live-results.json
+*-known.log
+*-unknown.log
+.DS_Store
+daemon/target-ubuntu2204/
+artifacts/

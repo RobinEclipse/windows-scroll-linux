@@ -1,0 +1,103 @@
+name: Build and test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-x86_64:
+    runs-on: ubuntu-24.04
+    # Build against older glibc even when the hosted runner is upgraded.
+    container:
+      image: ubuntu:22.04@sha256:281c5745f657873d78e5531fc5ba8575f46ab7769b94550ac99543f122679986
+    env:
+      DEBIAN_FRONTEND: noninteractive
+      CARGO_TERM_COLOR: always
+      RUST_TOOLCHAIN: 1.98.1
+      RELEASE_NAME: ${{ github.ref_type == 'tag' && github.ref_name || 'development' }}
+    steps:
+      - name: Install build and test dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends build-essential binutils ca-certificates curl git python3 python3-gi python3-dbus python3-evdev python3-cairo python3-gi-cairo gir1.2-gtk-4.0 gir1.2-atspi-2.0 libsystemd0 libudev1
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned Rust toolchain
+        run: |
+          curl --proto '=https' --tlsv1.2 -fsS https://sh.rustup.rs -o /tmp/rustup-init.sh
+          sh /tmp/rustup-init.sh -y --profile minimal --default-toolchain "$RUST_TOOLCHAIN" --component rustfmt --component clippy
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: Check formatting and Rust tests
+        run: |
+          cargo fetch --locked --manifest-path daemon/Cargo.toml
+          cargo fmt --manifest-path daemon/Cargo.toml --check
+          cargo test --locked --manifest-path daemon/Cargo.toml
+          cargo clippy --locked --manifest-path daemon/Cargo.toml --all-targets -- -D warnings
+      - name: Build GNU release and verify its ABI
+        run: |
+          cargo build --locked --release --manifest-path daemon/Cargo.toml
+          daemon/target/release/midscrolld --version
+          mkdir -p artifacts
+          python3 packaging/check_binary.py daemon/target/release/midscrolld --output artifacts/binary-compatibility.json
+          python3 packaging/generate_notices.py
+          python3 packaging/build_payload.py "dist/windows-scroll-linux-${RELEASE_NAME}" --binary daemon/target/release/midscrolld
+          tar -C dist -czf "artifacts/windows-scroll-linux-${RELEASE_NAME}-linux-x86_64.tar.gz" "windows-scroll-linux-${RELEASE_NAME}"
+          cd artifacts
+          sha256sum *.tar.gz > SHA256SUMS
+      - name: Test helper, installer, and built payload
+        run: |
+          mkdir -p build/test-tmp
+          TMPDIR="$PWD/build/test-tmp" python3 -m unittest discover -s tests -p 'test_*.py'
+      - name: Upload complete Linux x86-64 installer
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: windows-scroll-linux-x86_64
+          path: artifacts/
+          if-no-files-found: error
+          retention-days: 30
+
+  release:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: linux-x86_64
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified build artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: windows-scroll-linux-x86_64
+          path: artifacts
+      - name: Publish release downloads
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PYNOTES'
+          import os
+          from pathlib import Path
+          tag = os.environ['RELEASE_TAG']
+          repository = os.environ['GH_REPO']
+          Path('release-notes.md').write_text(f"""Windows Scroll Linux {tag}
+
+          Click the mouse wheel, move the mouse to scroll, and click any mouse button to stop.
+
+          Requires KDE Plasma 6 on Wayland, x86-64 Linux, and glibc 2.34 or newer. The installer checks the remaining desktop dependencies.
+
+          Download `windows-scroll-linux-{tag}-linux-x86_64.tar.gz`, extract it, open the extracted folder, and run `bash install.sh`.
+
+          [Installation guide](https://github.com/{repository}/blob/{tag}/INSTALL.md)
+          """)
+          PYNOTES
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" artifacts/*
+          else
+            gh release create "$RELEASE_TAG" artifacts/* --verify-tag --title "Windows Scroll Linux $RELEASE_TAG" --notes-file release-notes.md
+          fi

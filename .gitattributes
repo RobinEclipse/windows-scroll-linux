@@ -1,0 +1,8 @@
+* text=auto
+*.py text eol=lf
+*.rs text eol=lf
+*.sh text eol=lf
+*.yml text eol=lf
+daemon/vendor/** linguist-vendored
+THIRD_PARTY_NOTICES.md linguist-generated
+RUST_STDLIB_NOTICES.html linguist-generated
