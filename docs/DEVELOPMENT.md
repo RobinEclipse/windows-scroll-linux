@@ -3,9 +3,11 @@
 ## Build
 
 Use a recent stable Rust toolchain, a C linker and Python 3. The release toolchain
-is pinned in the GitHub Actions workflow. From the repository root:
+is pinned in the GitHub Actions workflow. These commands require a source
+checkout, rather than the downloadable installer. From the repository root:
 
 ```sh
+cargo fetch --manifest-path daemon/Cargo.toml --locked
 cargo build --manifest-path daemon/Cargo.toml --release --locked
 python3 packaging/generate_notices.py
 python3 packaging/build_payload.py dist
@@ -29,12 +31,13 @@ python3 -m unittest discover -s tests -v
 ```
 
 The Python tests need the runtime Python GTK and D-Bus dependencies listed in
-the installation guide. They use isolated mocks and temporary files. Rust tests
+the installation guide, plus the Python `evdev` module. They use isolated mocks
+and temporary files. Rust tests
 that need a real desktop session or synthetic input devices are ignored by
 default. Run those separately with appropriate input permissions and
 `--ignored --test-threads=1 --nocapture`.
 
-The [desktop integration suite](../integration/README.md) uses disposable GTK
+The [desktop integration suite](https://github.com/RobinEclipse/windows-scroll-linux/blob/main/integration/README.md) uses disposable GTK
 windows and virtual mice. Run it only on a test desktop with no physical input
 during the run. It restores focus, pointer position and the enabled state, and
 reports cleanup failures explicitly.

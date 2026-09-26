@@ -37,8 +37,9 @@ link are independent of the public release label **v1**.
 ## Recovery
 
 Installation validates a staged payload before replacing managed files. It keeps
-versioned sources, backups and a transaction journal. Failed updates restore the
-previous files and service state. The next installer invocation recovers an
+versioned sources, backups and a transaction journal. Failed updates attempt to
+restore the previous files and service state. If restoration cannot finish, the
+installer reports the retained recovery records. The next invocation recovers an
 interrupted transaction. This is not recovery performed automatically at boot.
 
 SELinux enforcement is preserved. The active daemon is installed at

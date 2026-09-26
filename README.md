@@ -1,78 +1,103 @@
 # Windows Scroll Linux
 
-**v1**
+Windows-style middle-click autoscroll for **KDE Plasma 6 on Wayland**.
 
-[Download v1 for Linux](https://github.com/RobinEclipse/windows-scroll-linux/releases/download/v1/windows-scroll-linux-v1-linux-x86_64.tar.gz)
+Click the mouse wheel, release it, then move the mouse to scroll. Click a mouse
+button to stop. Move farther from the starting point to scroll faster, vertically,
+horizontally or diagonally.
+
+**Current release: v1. Tested on Bazzite KDE.**
+
+[Download v1 (Linux x86_64)](https://github.com/RobinEclipse/windows-scroll-linux/releases/download/v1/windows-scroll-linux-v1-linux-x86_64.tar.gz)
 | [Installation guide](INSTALL.md)
+| [Report a problem](https://github.com/RobinEclipse/windows-scroll-linux/issues/new/choose)
 
-Windows-style mouse wheel click scrolling for Linux. Click the wheel, release
-it, then move the mouse to scroll. Click another mouse button to stop.
+## Before you install
 
-Works across application content on **KDE Plasma 6 with Wayland**. Tested on
-Bazzite KDE. This release does not support GNOME, Xfce, X11 or touchpads.
+You need KDE Plasma 6 with a Wayland session, a regular mouse with a clickable
+wheel, systemd and permission to install software as an administrator. The
+prebuilt download is for 64-bit Intel or AMD Linux with **glibc 2.34 or newer**.
 
-## What it does
+Bazzite KDE is the tested desktop. Other distributions must meet the same
+requirements; full desktop testing on them has not been completed. GNOME, Xfce,
+Plasma 5 and X11 are unsupported. This release does not provide touchpad
+autoscroll or an ARM download.
 
-- Click the wheel to start scrolling, or hold it for temporary scrolling.
-- Move farther from the starting point to scroll faster.
-- Scroll vertically, horizontally or diagonally.
-- Stop with a mouse button, the physical wheel or Escape.
-- Block ordinary middle-click paste on the mice it handles.
-- Keep native middle-click actions on tabs and links when they can be identified.
-- Start automatically and provide a settings window for speed and preferences.
+## Install v1
 
-The click that stops scrolling is consumed. Your next click works normally.
-Pausing keeps middle-click paste blocked. Native middle-button game controls and
-CAD panning are not supported. Excluded mice keep their normal behavior.
-
-## Install
-
-You need a 64-bit Intel or AMD Linux PC, KDE Plasma 6, a Wayland session, systemd
-and a regular mouse. The prebuilt download requires glibc 2.34 or newer.
-
-1. Open the [v1 release](https://github.com/RobinEclipse/windows-scroll-linux/releases/tag/v1).
-2. Download **windows-scroll-linux-v1-linux-x86_64.tar.gz** from **Assets**.
-3. Extract it and open a terminal inside the extracted folder.
-4. Run:
+1. [Download the installer archive](https://github.com/RobinEclipse/windows-scroll-linux/releases/download/v1/windows-scroll-linux-v1-linux-x86_64.tar.gz)
+   and extract it with your file manager.
+2. Open a terminal inside the extracted **windows-scroll-linux-v1** folder and run:
 
    ```sh
    bash install.sh
    ```
 
-The installer checks your system and asks for administrator authentication.
-Release all mouse buttons while it starts the services. If dependencies are
-missing, follow the instructions it prints. Log out and back in after a first
-installation so applications can expose their tabs and links reliably.
+3. Follow the administrator prompt. Keep mouse buttons released while the
+   installer starts the services. After the first installation, log out and
+   log back in.
 
-See the [installation guide](INSTALL.md) for dependencies, troubleshooting,
-updates and removal. The automatically generated GitHub source archives are for
-developers and do not contain the prebuilt program.
+If dependencies are missing, follow the instructions the installer prints.
+The [full guide](INSTALL.md) covers Bazzite, dependencies, updates and removal.
+On the release page, choose **windows-scroll-linux-v1-linux-x86_64.tar.gz**.
+GitHub's **Source code** archives do not contain the prebuilt program.
 
-## Use
+## How it behaves
 
-Click the mouse wheel over content, then move the mouse. Press another mouse
-button to stop. Use **Ctrl+Alt+M** to pause or resume scrolling, and open
-**Windows Scroll Linux Settings** from your application menu to change settings.
+| Action | Result |
+| --- | --- |
+| Click and release the wheel over content, then move | Autoscroll stays on until you stop it. |
+| Hold the wheel and move beyond the dead zone | Scroll temporarily; release the wheel to stop. Holding still and releasing acts like a click. |
+| Press any mouse button while autoscrolling | Stop scrolling. This click is consumed; click again to interact with the app. |
+| Turn the wheel or press Escape | Stop autoscrolling. The wheel movement or Escape also reaches the app. |
+| Middle-click a reliably identified tab or link | Send the app its normal middle-click, such as closing a tab or opening a link. The app decides the result. |
 
-Some applications do not expose their tabs and links reliably. In those cases,
-the program uses scrolling or suppresses the click. It cannot exactly reproduce
-Windows behavior in every application.
+Ordinary middle-click paste is blocked on mice handled by the running service.
+Recognized password fields, single-line inputs, desktop areas and panels suppress
+the middle-click instead of starting autoscroll.
 
-## Uninstall
+Open **Windows Scroll Linux Settings** from your application menu to adjust
+speed, direction and the optional pointer indicator. **Ctrl+Alt+M** pauses or
+resumes scrolling. While paused, middle-click remains blocked on handled mice,
+including tab and link actions.
 
-From the extracted download folder:
+## Limits to know
+
+- **Tab and link detection depends on the app.** The app must expose reliable
+  accessibility information about the control under the pointer. Unrecognized
+  or ambiguous targets may scroll or do nothing. Closing every browser tab or
+  opening every link with the wheel is not guaranteed.
+- **This is an approximation of Windows behavior.** It works across application
+  content on the supported desktop, but cannot reproduce every app's Windows
+  behavior. Native middle-button game controls and CAD panning are unsupported
+  on handled mice.
+- **The indicator is optional.** Scrolling still works if its drawing libraries
+  are unavailable. See [missing dependencies](INSTALL.md#missing-dependencies).
+- **Excluded mice bypass interception.** Desktop paste preferences still apply.
+  The installer also changes KDE and GTK primary-selection paste settings;
+  [the guide explains these changes](INSTALL.md#what-the-installer-changes).
+
+## Help and removal
+
+Start with [troubleshooting](INSTALL.md#if-something-is-not-working). If the
+problem persists, [open an issue](https://github.com/RobinEclipse/windows-scroll-linux/issues/new/choose)
+with your desktop version, mouse model and steps to reproduce it.
+
+To uninstall, open a terminal in the extracted download folder and run:
 
 ```sh
 python3 uninstall.py
 ```
 
-This stops the services and removes the program's launchers. Recovery copies and
-source versions are retained.
+See [removal details](INSTALL.md#uninstall) for what is restored or retained.
 
-## Source and license
+## Development and license
 
-The input engine is written in Rust. Desktop integration runs separately as
-your normal user. See [development and testing](docs/DEVELOPMENT.md).
+[![Build and test](https://github.com/RobinEclipse/windows-scroll-linux/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/RobinEclipse/windows-scroll-linux/actions/workflows/build.yml)
+
+The input engine is written in Rust, with Python desktop integration running as
+your normal user. See [building and testing](docs/DEVELOPMENT.md),
+[how it works](docs/TECHNICAL.md) and [what was tested for v1](docs/VALIDATION.md).
 
 Released under the [Unlicense](LICENSE). Based on
 [gnhen/midscroll](https://github.com/gnhen/midscroll), with a rewritten input
